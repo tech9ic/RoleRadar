@@ -1,10 +1,8 @@
-# 📡 RoleRadar
+<h1 align="center" style="font-size: 2.8rem; margin-bottom: 0;">
+  📡 RoleRadar
+</h1>
 
 <div align="center">
-
-![RoleRadar Banner](https://img.shields.io/badge/RoleRadar-Career_Intelligence_Workspace-0F172A?style=for-the-badge&logo=target&logoColor=F5B700)
-
-**A high-performance, personal career workspace and job intelligence portal hosted 100% statically on GitHub Pages.**
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -13,6 +11,8 @@
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white)](https://github.com/features/actions)
 [![IndexedDB](https://img.shields.io/badge/Storage-Local_IndexedDB-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F5B700?style=flat-square)](LICENSE)
+
+**A high-performance, personal career workspace and job intelligence portal hosted 100% statically on GitHub Pages.**
 
 </div>
 
