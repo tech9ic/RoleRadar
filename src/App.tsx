@@ -7,7 +7,7 @@ import {
   FileSpreadsheet, Filter, GraduationCap, LayoutDashboard, ListFilter, Menu, Moon, MoreHorizontal,
   Search, Settings, ShieldCheck, SlidersHorizontal, Sun, X, Bookmark, BookmarkCheck, ClipboardList,
   Layers3, MapPin, Clock3, ExternalLink, Sparkles, TrendingUp, Users, Wifi, Laptop, RefreshCw,
-  UserCheck, User, Upload, Copy, CheckCheck, FileText, Award
+  UserCheck, User, Upload, Copy, CheckCheck, FileText, Award, Home
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Fuse from "fuse.js";
@@ -22,10 +22,11 @@ import {
   calculateJobMatch, extractSkillsFromText, detectExperienceFromText, detectNameFromText,
   detectTitleFromText, extractTextFromFile, generatePersonalizedPitch, isFresherJob, parseExperienceYears
 } from "./utils/matcher";
+import { LandingPage } from "./LandingPage";
 
 const nav = [
   { label: "Workspace", items: [
-    { to: "/", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/jobs", label: "Explore Jobs", icon: Search },
     { to: "/freshers", label: "Fresher Jobs", icon: GraduationCap },
     { to: "/departments", label: "Departments", icon: Layers3 }
@@ -38,6 +39,9 @@ const nav = [
   { label: "Insights", items: [
     { to: "/analytics", label: "Analytics", icon: ChartNoAxesCombined },
     { to: "/sources", label: "Data Sources", icon: FileSpreadsheet }
+  ]},
+  { label: "RoleRadar", items: [
+    { to: "/", label: "Landing Home", icon: Home }
   ]}
 ];
 
@@ -77,13 +81,13 @@ export default function App() {
     localStorage.setItem("roleradar-theme",theme);
   },[theme]);
 
-  // First-time onboarding trigger check
+  // First-time onboarding trigger check (triggered when entering workspace)
   useEffect(() => {
     const onboarded = localStorage.getItem("roleradar-onboarded");
-    if (!onboarded) {
+    if (!onboarded && location.pathname !== "/") {
       setShowOnboarding(true);
     }
-  }, []);
+  }, [location.pathname]);
 
   // Global search keyboard shortcut (Cmd+K / Ctrl+K)
   useEffect(() => {
@@ -194,12 +198,12 @@ export default function App() {
     const matchFilter = searchParams.get("match");
 
     const crumbs: ReactNode[] = [
-      <button key="workspace" className="breadcrumb-link" onClick={()=>navigate("/")}>
+      <button key="workspace" className="breadcrumb-link" onClick={()=>navigate("/dashboard")}>
         Workspace
       </button>
     ];
 
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/dashboard") {
       crumbs.push(<ChevronRight key="sep1" size={14} />);
       crumbs.push(<strong key="page">Dashboard</strong>);
     } else if (pathname === "/jobs") {
@@ -249,12 +253,41 @@ export default function App() {
     return <div className="breadcrumbs">{crumbs}</div>;
   };
 
+  // Standalone Full-Width Landing Page on root route "/"
+  if (location.pathname === "/") {
+    return (
+      <>
+        <LandingPage
+          jobs={jobs}
+          meta={meta}
+          profile={profile}
+          goldCount={goldMatchesCount}
+          theme={theme}
+          setTheme={setTheme}
+          onOpenJob={setSelectedJob}
+        />
+        {selectedJob && (
+          <JobModal
+            job={selectedJob}
+            bookmarked={bookmarks.includes(selectedJob.id)}
+            currentStatus={applications.find(a => a.jobId === selectedJob.id)?.status}
+            match={jobMatches.get(selectedJob.id)}
+            profile={profile}
+            onClose={() => setSelectedJob(null)}
+            onBookmark={() => toggleBookmark(selectedJob.id)}
+            onTrack={upsertApplication}
+          />
+        )}
+      </>
+    );
+  }
+
   return <div className="app-shell">
     <aside className={`sidebar ${sidebarOpen?"sidebar-open":""}`}>
-      <div className="brand">
+      <div className="brand" onClick={()=>navigate("/")} style={{cursor:"pointer"}} title="Back to Landing Page">
         <div className="brand-mark"><BriefcaseBusiness size={20}/></div>
-        <div><div className="brand-name">RoleRadar</div><div className="brand-sub">Career workspace</div></div>
-        <button className="icon-button mobile-close" onClick={()=>setSidebarOpen(false)}><X size={18}/></button>
+        <div><div className="brand-name">RoleRadar</div><div className="brand-sub">Career workspace ↗</div></div>
+        <button className="icon-button mobile-close" onClick={(e)=>{e.stopPropagation();setSidebarOpen(false);}}><X size={18}/></button>
       </div>
       <div className="workspace-switch" onClick={()=>navigate("/profile")} style={{cursor:"pointer"}} title="Edit workspace profile">
         <div className="workspace-avatar">{initials(profile.name || "RR")}</div>
@@ -267,7 +300,7 @@ export default function App() {
       <nav className="side-nav">
         {nav.map(group=><div className="nav-group" key={group.label}>
           <div className="nav-label">{group.label}</div>
-          {group.items.map(item=><NavLink end={item.to==="/"} to={item.to} key={item.to} onClick={()=>setSidebarOpen(false)} className={({isActive})=>`nav-item ${isActive?"active":""}`}>
+          {group.items.map(item=><NavLink end={item.to==="/" || item.to==="/dashboard"} to={item.to} key={item.to} onClick={()=>setSidebarOpen(false)} className={({isActive})=>`nav-item ${isActive?"active":""}`}>
             <item.icon size={18} strokeWidth={1.8}/><span>{item.label}</span>
             {item.to==="/profile" && goldMatchesCount > 0 && <em style={{background:"var(--amber)",color:"#121A33"}}>{goldMatchesCount}★</em>}
             {item.to==="/bookmarks" && bookmarks.length>0 && <em>{bookmarks.length}</em>}
@@ -315,6 +348,7 @@ export default function App() {
         {loading ? <div className="loading-state"><div className="loader"/><strong>Preparing your workspace</strong><span>Loading your RoleRadar dataset...</span></div> :
         <Routes>
           <Route path="/" element={<Dashboard jobs={jobs} meta={meta} applications={applications} profile={profile} goldCount={goldMatchesCount} onOpen={setSelectedJob}/>}/>
+          <Route path="/dashboard" element={<Dashboard jobs={jobs} meta={meta} applications={applications} profile={profile} goldCount={goldMatchesCount} onOpen={setSelectedJob}/>}/>
           <Route path="/jobs" element={<JobsPage jobs={searchJobs(globalSearch)} allJobs={jobs} onOpen={setSelectedJob} bookmarks={bookmarks} onBookmark={toggleBookmark} jobMatches={jobMatches} profile={profile}/>}/>
           <Route path="/freshers" element={<JobsPage jobs={searchJobs(globalSearch).filter(isFresherJob)} allJobs={jobs} onOpen={setSelectedJob} bookmarks={bookmarks} onBookmark={toggleBookmark} fresher jobMatches={jobMatches} profile={profile}/>}/>
           <Route path="/departments" element={<Departments jobs={jobs}/>}/>
