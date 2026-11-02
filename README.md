@@ -1,251 +1,226 @@
-<h1 align="center" style="font-size: 2.8rem; margin-bottom: 0;">
-  📡 RoleRadar
-</h1>
-
 <div align="center">
 
+# 📡 RoleRadar
+
+### Career intelligence for your next move
+
+RoleRadar is a privacy-first job discovery workspace that turns a large job dataset into a focused, searchable and personalized career dashboard.
+
+[![Live app](https://img.shields.io/badge/Live%20app-RoleRadar-F5B700?style=for-the-badge&logo=github)](https://tech9ic.github.io/RoleRadar/)
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white)](https://github.com/features/actions)
-[![IndexedDB](https://img.shields.io/badge/Storage-Local_IndexedDB-4CAF50?style=flat-square&logo=sqlite&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)
-[![License: MIT](https://img.shields.io/badge/License-MIT-F5B700?style=flat-square)](LICENSE)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38B2AC?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
-**A high-performance, personal career workspace and job intelligence portal hosted 100% statically on GitHub Pages.**
+<br />
+
+**[Open the live workspace →](https://tech9ic.github.io/RoleRadar/)**
 
 </div>
 
 ---
 
-> [!NOTE]
-> ### 💫 Fully Vibe-Coded Project
-> **RoleRadar is a fully vibe-coded application.** Built collaboratively through rapid AI pair programming, this project was brought to life using **ChatGPT**, **Claude**, and the true saviour and companion, **Google Antigravity**.
+## What is RoleRadar?
 
----
+Job boards are good at showing more listings. RoleRadar is built to help you find the **right** listings faster.
 
-## ⚡ Highlights & Core Features
+Upload your resume or configure your profile, explore normalized job data, and let the browser calculate which roles deserve your attention. Save promising roles, track your applications, and keep your career search organized without sending personal data to a backend.
 
+> **Designed for clarity. Built for privacy. Made for momentum.**
+
+## ✨ The experience
+
+### A landing page that gets you moving
+
+Start with a focused search, browse trending skills, jump straight to fresher roles, or launch the full workspace. Light and dark themes, responsive layouts, and purposeful visual hierarchy keep the experience useful on both desktop and mobile.
+
+### A workspace instead of another job list
+
+The application is organized around the way a real job search works:
+
+| Surface | What you can do |
+| --- | --- |
+| **Dashboard** | See dataset health, match totals, recent roles and your current career-search snapshot |
+| **Explore Jobs** | Search across title, company, location, department, skills and more |
+| **Fresher Jobs** | Quickly isolate entry-level, graduate, intern and junior opportunities |
+| **Departments** | Browse roles by career area and understand the distribution of the dataset |
+| **My Profile & Resume** | Store your target role, experience, skills and parsed resume details |
+| **Bookmarks** | Keep a focused shortlist of roles worth revisiting |
+| **Applications** | Track roles from interested and saved through assessment, interview, offer or rejection |
+| **Analytics** | Understand job volume, locations, work arrangements and hiring patterns |
+| **Data Sources** | Inspect the workbooks and ingestion metadata behind the job database |
+| **Settings** | Switch themes and export or restore your local RoleRadar backup |
+
+## 🎯 Match Radar
+
+RoleRadar calculates a transparent match score in the browser using your profile and each job's structured data.
+
+- **🏆 Golden opportunity — 80%+**: strong alignment across experience, title relevance and at least two key skills.
+- **🟢 Potential match — 50–79%**: a promising role with meaningful overlap.
+- **⚪ Below 50%**: kept out of the focused match view so the signal stays useful.
+
+Match explanations surface the overlapping skills and relevant experience instead of hiding the result behind an opaque recommendation. When a role looks right, the built-in cold-pitch generator can draft a personalized recruiter message using the role and your matching strengths.
+
+## 📄 Resume intelligence, entirely in your browser
+
+RoleRadar can extract useful profile signals from a resume PDF without uploading the file:
+
+- Decompresses PDF streams with native browser APIs and a pure JavaScript fallback.
+- Decodes ToUnicode CMaps used by modern CID fonts.
+- Detects a candidate name, target role, experience level and technical skills.
+- Maps related terms through a canonical skill and synonym dictionary.
+- Recalculates job matches as your profile changes.
+
+Your resume text, profile, bookmarks, notes and application history stay in your browser. There is no resume API, hosted database or paid AI key hidden behind the experience.
+
+## 🔖 A private application command center
+
+Save roles directly from the job browser and move them through a practical pipeline:
+
+```text
+Interested → Saved → Applied → Assessment → Interview → Offer
+                                                        ↘ Rejected
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 🌟 Golden Matches (≥ 80%)    │ 📄 Client-Side CMap PDF Parser (Zero Server)│
-│ 🎯 Time-Adaptive Greetings   │ 💼 Local IndexedDB Application Kanban       │
-│ 🔎 Themed Multi-Axis Filters │ 🚀 Continuous Excel GitOps via Actions      │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
 
-### 1. 🌟 Golden Opportunity Radar & Skill Matching
-- **Strict Matching Standards**:
-  - 🏆 **Golden Opportunity (`≥ 80%` fit)**: Highlights high-conviction matches with glowing amber outlines (`#F5B700`). Requires experience compatibility, title relevance, and at least 2 key overlapping skills.
-  - 🟢 **Potential Match (`50% – 79%` fit)**: Highlights solid opportunities with glowing emerald borders (`#10B981`).
-  - ⚪ **Below 50%**: Filtered out cleanly to eliminate noise.
-- **One-Click Cold Pitch Generator**: Instantly composes a professional, personalized recruiter outreach message quoting your top matching skills and target position.
+Add follow-up dates and notes, then export everything as a `roleradar-backup.json` file whenever you want a portable copy of your local workspace.
 
-### 2. 📄 Zero-Server Client-Side Resume Engine
-- **In-Browser Decompression**: Decompresses binary PDF streams using native browser `DecompressionStream` and a synchronous, pure JavaScript DEFLATE/zlib inflator (`inflateRaw`).
-- **ToUnicode CMap Decoder**: Parses modern CID hex fonts (`[<0026...>-247<...>] TJ`) produced by Overleaf, LaTeX, and Canva.
-- **Smart Extraction**: Auto-detects candidate name, target role headline, experience level (Fresher / Years), and 25+ technical skills directly in your browser.
-- **100% Offline & Private**: Your resume never leaves your computer. No external APIs, no cloud storage, no token costs.
+## 🏗️ How the data pipeline works
 
-### 3. 🌙 Dynamic Motivational Greetings
-- Tailors greetings to your exact local time:
-  - **Late Night (`00:00 – 05:00`)**: *"Welcome back, nightowlers! · Burning the midnight oil pays off."*
-  - **Dawn (`05:00 – 09:00`)**: *"Good early morning! · The early bird catches the best roles."*
-  - **Morning, Afternoon & Evening**: Uplifting, purpose-built motivational quotes.
-
-### 4. 🎛️ High-Contrast Custom Dropdown Filters
-- Designed specifically for dark and light modes without native Windows `<select>` rendering bugs.
-- **6 Multi-Axis Filters**:
-  1. **Department**: Engineering, Security, QA, Data, Design, Product, etc.
-  2. **Experience (Years)**: Dedicated brackets (`0-1 yrs Fresher/Intern`, `1-3 yrs Junior`, `3-5 yrs Mid`, `5-8 yrs Senior`, `8+ yrs Lead`) + exact year filters.
-  3. **Seniority**: Fresher / Junior, Mid-level, Senior, Lead.
-  4. **Work Mode**: Remote, Hybrid, Onsite.
-  5. **Market / Region**: India, US, Europe, Global.
-  6. **Sorting**: Date posted, seniority, relevance.
-
-### 5. 💼 Private Application Pipeline & Bookmarks
-- **Local Kanban Board**: Track applications through `Saved` ➔ `Applied` ➔ `Interviewing` ➔ `Offered` ➔ `Rejected`.
-- **IndexedDB Storage**: Bookmarks, resumes, notes, and statuses persist across browser refreshes in IndexedDB.
-- **Data Portability**: Full JSON backup export and restore built into Settings.
-
----
-
-## 🏗️ Architecture & Data Pipeline
-
-RoleRadar turns your repository into a self-updating, serverless job portal using a GitOps-driven pipeline:
+Job data starts as Excel workbooks and becomes a searchable static dataset during the build:
 
 ```mermaid
 flowchart LR
-    A["📁 Excel Workbooks\n(data/**/*.xlsx)"] -->|git push| B["⚙️ GitHub Actions\n(deploy.yml)"]
-    B -->|npm run ingest| C["📊 build-data.ts\n(Parse, Normalize, Dedupe)"]
-    C -->|Generate| D["💾 public/generated/\n(jobs.json & meta.json)"]
-    D -->|npm run build| E["📦 Vite Production Bundle\n(dist/)"]
-    E -->|Deploy| F["🌐 GitHub Pages\n(Static Hosting)"]
-    F -->|Fetch JSON| G["💻 Client Browser\n(React 18 + HashRouter)"]
-    G <-->|Private Local State| H[("🗄️ IndexedDB / LocalStorage\n(Profile, Resume, Kanban)")]
+    A["Excel workbooks<br/>data/**/*.xlsx"] -->|push| B["GitHub Actions"]
+    B --> C["build-data.ts<br/>parse · normalize · dedupe"]
+    C --> D["public/generated<br/>jobs.json · metadata.json"]
+    D --> E["Vite production build"]
+    E --> F["GitHub Pages"]
+    F --> G["React workspace<br/>search · filters · matching"]
+    G <-->|private local state| H[("IndexedDB<br/>profile · bookmarks · applications")]
 ```
 
----
+The ingestion script:
 
-## 📁 Repository Structure
+1. Discovers nested `.xlsx` files under `data/`.
+2. Skips summary sheets and recognizes common column aliases.
+3. Extracts application links, normalizes fields and combines duplicate records.
+4. Generates jobs, metadata, an ingestion report and a manifest.
+5. Publishes the updated static site through GitHub Pages.
 
-```text
-roleradar/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml           # Automated CI/CD pipeline for GitHub Pages
-├── data/                        # Drop new Excel sheets here!
-│   └── 2026/
-│       └── november/
-│           └── KrishnaAITech_Job_Sheet_2026-11-02.xlsx
-├── public/
-│   ├── favicon.svg              # RoleRadar Radar Logo
-│   └── generated/               # Auto-generated by build pipeline
-│       ├── jobs.json            # Unified normalized jobs dataset
-│       └── meta.json            # Ingestion metadata & worksheet stats
-├── scripts/
-│   └── build-data.ts            # High-speed multi-sheet Excel processor
-├── src/
-│   ├── db/
-│   │   └── local.ts             # IndexedDB & LocalStorage client DB
-│   ├── types/
-│   │   └── job.ts               # Strict TypeScript definitions
-│   ├── utils/
-│   │   ├── format.ts            # Pretty dates, badges, compact numbers
-│   │   ├── inflate.ts           # Pure JS DEFLATE / zlib stream decompressor
-│   │   └── matcher.ts           # Resume parser, CMap decoder & match engine
-│   ├── App.tsx                  # Main single-page application & routing
-│   ├── index.html               # HTML entry point with meta tags
-│   ├── main.tsx                 # React DOM bootstrapper (HashRouter)
-│   ├── styles.css               # Core layout, glowing borders & responsive CSS
-│   └── theme.css                # Dark/light theme design system
-├── package.json
-├── tsconfig.json
-└── vite.config.ts               # Automatic base-path handling for GitHub Pages
-```
-
----
-
-## 🚀 Step-by-Step Deployment Guide (GitHub Pages)
-
-### Step 1: Create a GitHub Repository
-1. Log in to [GitHub](https://github.com/).
-2. Click **New Repository** (top right).
-3. Name your repository (e.g., `roleradar` or `job-intelligence`).
-4. Set the visibility to **Public** *(required for free GitHub Pages)*.
-5. Do **not** initialize with a README (this repository already has one).
-6. Click **Create repository**.
-
-### Step 2: Push Your Code to GitHub
-Open your terminal in this project folder and run:
+Adding a new job sheet is intentionally simple:
 
 ```bash
-# 1. Initialize git (if not already initialized)
-git init
-
-# 2. Add all files
-git add .
-
-# 3. Create initial commit
-git commit -m "feat: launch RoleRadar intelligent career workspace"
-
-# 4. Set default branch to main
-git branch -M main
-
-# 5. Connect your remote repository (replace with your URL)
-git remote add origin https://github.com/YOUR_USERNAME/roleradar.git
-
-# 6. Push to GitHub
-git push -u origin main
-```
-
-### Step 3: Enable GitHub Actions for Pages
-1. Go to your repository on GitHub.
-2. Click **Settings** (tab at the top).
-3. In the left sidebar, click **Pages** (under "Code and automation").
-4. Under **Build and deployment**:
-   - Change **Source** from *Deploy from a branch* to **GitHub Actions**.
-5. That's it!
-
-### Step 4: Watch It Deploy
-1. Click the **Actions** tab in your GitHub repository.
-2. You will see a workflow named **`Build and deploy RoleRadar`** running automatically.
-3. Once completed (takes ~45 seconds), your live site URL will be displayed at the top:
-   ```
-   https://YOUR_USERNAME.github.io/roleradar/
-   ```
-
----
-
-## 🔄 Automatic Data Reload: How Adding New Jobs Works
-
-Whenever you receive a new Excel job sheet, you **do not** need to edit any code or configure databases:
-
-```bash
-# 1. Place the new .xlsx file anywhere under data/
-cp new_jobs.xlsx data/2026/november/new_jobs.xlsx
-
-# 2. Commit and push
-git add data/
+Copy-Item .\new_jobs.xlsx .\data\2026\november\
+git add data
 git commit -m "data: add latest job sheet"
 git push
 ```
 
-### What Happens Behind the Scenes:
-1. **Trigger**: GitHub Actions detects changes in `data/**` via [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-2. **Ingest**: The pipeline runs `npm run ingest` (`scripts/build-data.ts`).
-3. **Parse & Normalize**:
-   - Discovers all nested workbooks.
-   - Parses each worksheet (ignoring summary sheets).
-   - Maps column aliases (`title`, `company`, `experience`, `skills`, `applyUrl`, etc.).
-   - Extracts hyperlinked formulas to capture raw application URLs.
-   - Deduplicates identical postings using SHA-1 fingerprints.
-4. **Build & Publish**: Vite compiles the updated `jobs.json` into static assets and publishes the updated portal live to GitHub Pages.
-5. **Zero Downtime**: Visitors refresh the page and instantly see the new jobs, count badges, and match scores.
+The workflow runs automatically when `data/`, application source, scripts or build configuration changes. You can also trigger it manually from **Actions → Build and deploy RoleRadar → Run workflow**.
 
-> [!TIP]
-> You can also trigger an immediate rebuild at any time manually by going to **Actions** ➔ **Build and deploy RoleRadar** ➔ **Run workflow**.
+## 🧰 Tech stack
 
----
+| Layer | Technology |
+| --- | --- |
+| UI | React 18, React Router, TypeScript |
+| Build | Vite, Tailwind CSS, PostCSS |
+| Data | SheetJS, generated JSON, GitHub Actions |
+| Local persistence | IndexedDB via `idb`, with LocalStorage preferences |
+| Search | Fuse.js fuzzy search |
+| Visualizations | Recharts |
+| Icons and typography | Lucide React, Bricolage Grotesque, Instrument Sans |
+| Hosting | GitHub Pages |
 
-## 💻 Local Development
+## 📁 Repository map
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) v20 or v22+
-- npm or pnpm
-
-### Setup Commands
-```bash
-# Install dependencies
-npm install
-
-# Start local development server with hot-reload
-npm run dev
-
-# Regenerate dataset from Excel files in data/
-npm run ingest
-
-# Build and preview production release locally
-npm run build
-npm run preview
+```text
+roleradar/
+├── .github/workflows/deploy.yml  # Type-check, ingest, build and deploy
+├── data/                         # Source Excel workbooks
+├── public/
+│   ├── favicon.svg
+│   └── generated/                # Build-generated job data and reports
+├── scripts/build-data.ts         # Excel ingestion and normalization
+├── src/
+│   ├── db/local.ts               # IndexedDB and local backup helpers
+│   ├── types/job.ts              # Shared domain types
+│   ├── utils/
+│   │   ├── matcher.ts            # Resume parsing and match scoring
+│   │   ├── inflate.ts            # Pure JavaScript PDF decompression
+│   │   └── format.ts             # Display formatting helpers
+│   ├── App.tsx                   # Workspace routes and application state
+│   ├── LandingPage.tsx           # Public landing experience
+│   ├── styles.css                # Layout and component styling
+│   └── theme.css                # Light and dark design tokens
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
 ```
 
----
+## 🚀 Run it locally
 
-## 🔒 Privacy & Security
+### Prerequisites
 
-- **Public Repository Notice**: Since this repository is public, any Excel sheets committed under `data/` and generated job files are public. Do not commit confidential compensation letters, private emails, or private company data.
-- **Client-Side Isolation**: All candidate information—including your resume file, parsed skills, application notes, interview dates, and bookmarked jobs—is stored exclusively inside your browser's private **IndexedDB** / **LocalStorage**. Nothing is sent to an external server.
+- Node.js 20 or newer
+- npm
 
----
+### Setup
 
-## 🤝 Acknowledgements & Credits
+```bash
+git clone https://github.com/tech9ic/RoleRadar.git
+cd RoleRadar
+npm install
+```
 
-- **Crafted with AI**: Proudly vibe-coded through continuous prompt-driven iteration using **ChatGPT**, **Claude**, and **Google Antigravity**.
-- **Libraries & Icons**: Powered by [React](https://react.dev/), [Vite](https://vitejs.dev/), [Lucide React](https://lucide.dev/), [SheetJS (xlsx)](https://sheetjs.com/), [Recharts](https://recharts.org/), and [TanStack Table](https://tanstack.com/table).
+### Development commands
 
----
+```bash
+npm run dev        # Start Vite with hot reload
+npm run ingest     # Rebuild generated data from Excel workbooks
+npm run typecheck  # Run the TypeScript project check
+npm run lint       # Run ESLint
+npm run build      # Ingest, type-check and create a production build
+npm run preview    # Preview the production build locally
+```
+
+Open the local URL printed by Vite, usually `http://localhost:5173`.
+
+## 🌐 Deploy to GitHub Pages
+
+1. Fork or clone the repository.
+2. Push it to a public GitHub repository.
+3. In **Settings → Pages**, set the source to **GitHub Actions**.
+4. Push a change to `main`, or run **Build and deploy RoleRadar** manually from the Actions tab.
+
+The workflow uses Node 22, runs the type-check, ingests the Excel dataset, builds the Vite app and deploys `dist/` to GitHub Pages. Vite automatically derives the correct repository base path in GitHub Actions.
+
+## 🔒 Privacy and data boundaries
+
+RoleRadar is static by design:
+
+- Resume parsing and match scoring happen locally in the browser.
+- Profile data, bookmarks and applications use IndexedDB / LocalStorage.
+- No personal profile or resume data is sent to a RoleRadar server.
+- Public Excel files and generated job data are visible in the repository and deployed site.
+- Never commit confidential resumes, compensation letters, private emails or internal company data to `data/`.
+
+## 🤝 Contributing
+
+Ideas, bug reports and improvements are welcome. Before opening a pull request:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+For data changes, add or update the relevant workbook under `data/` and verify the generated dataset locally with `npm run ingest`.
+
+## 🌟 Credits
+
+RoleRadar is an open-source, AI-assisted project built through rapid human–AI pair programming. It is powered by React, Vite, TypeScript, SheetJS, Fuse.js, Recharts, TanStack Table and Lucide.
 
 <div align="center">
-  <sub>RoleRadar · Built for ambitious careers · Free & Open Source under the MIT License</sub>
+  <br />
+  <sub>RoleRadar · Built for ambitious careers</sub>
 </div>
