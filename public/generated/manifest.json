@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-02T17:33:53.906333+00:00",
+  "jobs": "/generated/jobs.json",
+  "metadata": "/generated/metadata.json",
+  "report": "/generated/ingestion-report.json",
+  "rawRecords": 13360,
+  "uniqueJobs": 6675
+}

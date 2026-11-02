@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-11-02T17:33:53.906333+00:00",
+  "files": [
+    {
+      "name": "KrishnaAITech_Job_Sheet_2026-11-02.xlsx",
+      "status": "processed",
+      "rawRecords": 13360
+    }
+  ],
+  "worksheetsProcessed": 40,
+  "rawRecords": 13360,
+  "uniqueJobs": 6675,
+  "duplicatesRemoved": 6675,
+  "invalidRows": 10,
+  "warnings": []
+}
