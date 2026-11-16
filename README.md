@@ -222,5 +222,5 @@ RoleRadar is an open-source, AI-assisted project built through rapid human–AI 
 
 <div align="center">
   <br />
-  <sub>RoleRadar · Built for ambitious careers</sub>
+  <sub>RoleRadar · Built for ambitious careers ☺️</sub>
 </div>
