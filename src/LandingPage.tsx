@@ -309,9 +309,9 @@ export function LandingPage({
             <div className="feature-icon-wrap blue-glow">
               <ShieldCheck size={24} color="var(--blue)" />
             </div>
-            <h3>Client-Side CMap Resume Engine</h3>
+            <h3>Client-Side Resume Reader</h3>
             <p>
-              Decompresses binary PDF streams (`inflateRaw`), decodes LaTeX/Canva CID font vectors, and parses your skills right in your browser. Zero third-party cloud uploads.
+              Reads selectable text from PDFs and LaTeX source files, then extracts skills in your browser. Scanned PDFs need OCR or pasted text. Files are never uploaded, and LaTeX templates or versions are not identified.
             </p>
           </div>
 
@@ -470,4 +470,3 @@ export function LandingPage({
     </div>
   );
 }
-

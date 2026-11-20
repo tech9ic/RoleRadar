@@ -40,13 +40,13 @@ The application is organized around the way a real job search works:
 
 | Surface | What you can do |
 | --- | --- |
-| **Dashboard** | See dataset health, match totals, recent roles and your current career-search snapshot |
-| **Explore Jobs** | Search across title, company, location, department, skills and more |
+| **Dashboard** | See dataset health, match totals, recent roles, and follow-ups due or coming up |
+| **Explore Jobs** | Search and filter listings, compare up to three roles side by side, and review profile skill gaps |
 | **Fresher Jobs** | Quickly isolate entry-level, graduate, intern and junior opportunities |
 | **Departments** | Browse roles by career area and understand the distribution of the dataset |
 | **My Profile & Resume** | Store your target role, experience, skills and parsed resume details |
 | **Bookmarks** | Keep a focused shortlist of roles worth revisiting |
-| **Applications** | Track roles from interested and saved through assessment, interview, offer or rejection |
+| **Applications** | Track roles, set follow-up dates, and see overdue or upcoming reminders |
 | **Analytics** | Understand job volume, locations, work arrangements and hiring patterns |
 | **Data Sources** | Inspect the workbooks and ingestion metadata behind the job database |
 | **Settings** | Switch themes and export or restore your local RoleRadar backup |
@@ -61,15 +61,20 @@ RoleRadar calculates a transparent match score in the browser using your profile
 
 Match explanations surface the overlapping skills and relevant experience instead of hiding the result behind an opaque recommendation. When a role looks right, the built-in cold-pitch generator can draft a personalized recruiter message using the role and your matching strengths.
 
+Open a role to see profile skills that match its listed requirements and skills not found in your profile. In Explore Jobs, select two or three listings to compare their match score, requirements, location, work arrangement, compensation, and posting date.
+
 ## 📄 Resume intelligence, entirely in your browser
 
 RoleRadar can extract useful profile signals from a resume PDF without uploading the file:
 
 - Decompresses PDF streams with native browser APIs and a pure JavaScript fallback.
-- Decodes ToUnicode CMaps used by modern CID fonts.
+- Uses PDF.js to extract selectable text from PDFs, including PDFs with Unicode font maps.
+- Reads LaTeX `.tex` source files locally and strips common markup before scanning.
 - Detects a candidate name, target role, experience level and technical skills.
 - Maps related terms through a canonical skill and synonym dictionary.
 - Recalculates job matches as your profile changes.
+
+Resume skills are extracted from readable text and matched against the app's skill aliases and job-dataset skills. Scanned/image-only PDFs require OCR or pasted text. Resume parsing does not identify a LaTeX template or version, and RoleRadar does not scrape external profile websites.
 
 Your resume text, profile, bookmarks, notes and application history stay in your browser. There is no resume API, hosted database or paid AI key hidden behind the experience.
 
@@ -83,6 +88,7 @@ Interested → Saved → Applied → Assessment → Interview → Offer
 ```
 
 Add follow-up dates and notes, then export everything as a `roleradar-backup.json` file whenever you want a portable copy of your local workspace.
+Overdue and next-seven-day follow-ups appear in the application tracker and on the dashboard.
 
 ## 🏗️ How the data pipeline works
 
@@ -126,7 +132,7 @@ The workflow runs automatically when `data/`, application source, scripts or bui
 | Build | Vite, Tailwind CSS, PostCSS |
 | Data | SheetJS, generated JSON, GitHub Actions |
 | Local persistence | IndexedDB via `idb`, with LocalStorage preferences |
-| Search | Fuse.js fuzzy search |
+| Search | Fuse.js fuzzy search; PDF text extraction with PDF.js |
 | Visualizations | Recharts |
 | Icons and typography | Lucide React, Bricolage Grotesque, Instrument Sans |
 | Hosting | GitHub Pages |

@@ -1,13 +1,13 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, ArrowDownUp, ArrowUpRight, BriefcaseBusiness, Building2, ChartNoAxesCombined,
-  Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Command, Database, Download,
+  CalendarClock, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Command, Database, Download,
   FileSpreadsheet, Filter, GraduationCap, LayoutDashboard, ListFilter, Menu, Moon, MoreHorizontal,
   Search, Settings, ShieldCheck, SlidersHorizontal, Sun, X, Bookmark, BookmarkCheck, ClipboardList,
   Layers3, MapPin, Clock3, ExternalLink, Sparkles, TrendingUp, Users, Wifi, Laptop, RefreshCw,
-  UserCheck, User, Upload, Copy, CheckCheck, FileText, Award, Home
+  UserCheck, User, Upload, Copy, CheckCheck, FileText, Award, Home, GitCompareArrows
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Fuse from "fuse.js";
@@ -354,7 +354,7 @@ export default function App() {
           <Route path="/departments" element={<Departments jobs={jobs}/>}/>
           <Route path="/profile" element={<ProfilePage profile={profile} onSave={handleSaveProfile} jobs={jobs} goldCount={goldMatchesCount} greenCount={greenMatchesCount}/>}/>
           <Route path="/bookmarks" element={<JobsPage jobs={jobs.filter(j=>bookmarks.includes(j.id))} allJobs={jobs} onOpen={setSelectedJob} bookmarks={bookmarks} onBookmark={toggleBookmark} title="Your bookmarks" jobMatches={jobMatches} profile={profile}/>}/>
-          <Route path="/applications" element={<ApplicationsPage jobs={jobs} applications={applications} onStatus={upsertApplication} onRemove={removeApplication} onPatch={patchApplication}/>}/>
+          <Route path="/applications" element={<ApplicationsPage jobs={jobs} applications={applications} onStatus={upsertApplication} onRemove={removeApplication} onPatch={patchApplication} onOpenJob={setSelectedJob}/>}/>
           <Route path="/analytics" element={<Analytics jobs={jobs} meta={meta}/>}/>
           <Route path="/sources" element={<Sources meta={meta}/>}/>
           <Route path="/settings" element={<SettingsPage theme={theme} setTheme={setTheme} onExport={exportData} onImport={importData}/>}/>
@@ -430,16 +430,17 @@ function OnboardingModal({
       if (detectedExp !== null) {
         setExp(String(detectedExp));
       }
-      if (detectedName && !name.trim()) {
+      if (detectedName && (!name.trim() || name.trim().toLowerCase() === "candidate")) {
         setName(detectedName);
       }
-      if (detectedTitle && !title.trim()) {
+      if (detectedTitle && (!title.trim() || title.trim().toLowerCase() === "software engineer")) {
         setTitle(detectedTitle);
       }
       setUploadMessage(`✓ Detected ${detectedSkills.length} skills & ${detectedExp ?? exp} yrs experience from ${file.name}!`);
     } catch (e) {
       console.error(e);
-      setUploadMessage("Could not parse file automatically. You can type or paste skills below.");
+      const message = e instanceof Error ? e.message : "The file could not be parsed.";
+      setUploadMessage(`${message} You can type or paste skills below.`);
     } finally {
       setAnalyzing(false);
     }
@@ -527,7 +528,7 @@ function OnboardingModal({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.txt,.docx,.md"
+            accept=".pdf,.txt,.docx,.md,.tex"
             style={{display:"none"}}
             onChange={e => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0]); }}
           />
@@ -535,20 +536,20 @@ function OnboardingModal({
             <Upload size={22} color="var(--blue)"/>
             <div style={{textAlign:"left"}}>
               <strong style={{display:"block",fontSize:"13.5px",color:"var(--text)"}}>
-                {analyzing ? "Extracting skills from resume..." : resumeFileName ? `Uploaded: ${resumeFileName}` : "Upload your resume (.pdf, .txt, .docx)"}
+                {analyzing ? "Extracting skills from resume..." : resumeFileName ? `Uploaded: ${resumeFileName}` : "Upload your resume (.pdf, .docx, .tex, .txt)"}
               </strong>
               <small style={{color:"var(--muted)",fontSize:"12px"}}>Auto-fills your skills & experience in 1 second · 100% private to your browser</small>
             </div>
           </div>
           {uploadMessage && (
-            <div style={{marginTop:"8px",fontSize:"12px",color:"#10B981",fontWeight:600}}>
+            <div style={{marginTop:"8px",fontSize:"12px",color:uploadMessage.startsWith("✓") ? "#10B981" : "#EF4444",fontWeight:600}}>
               {uploadMessage}
             </div>
           )}
         </div>
 
         {/* Manual Details Form */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"12px"}}>
+        <div className="profile-fields-grid">
           <div className="form-field" style={{marginBottom:0}}>
             <label>Your Name</label>
             <input
@@ -669,53 +670,52 @@ function OnboardingModal({
 
 function matchesExperience(job: Job, selectedExp: string): boolean {
   if (selectedExp === "All experience") return true;
-  const years = parseExperienceYears(job.experience);
-  
-  if (selectedExp === "bracket:0-1") {
-    return isFresherJob(job) || (years !== null && years <= 1) || (job.experience || "").includes("0+") || (job.experience || "").includes("1+");
-  }
-  if (selectedExp === "bracket:1-3") {
-    return years !== null && years >= 1 && years <= 3;
-  }
-  if (selectedExp === "bracket:3-5") {
-    return years !== null && years >= 3 && years <= 5;
-  }
-  if (selectedExp === "bracket:5-8") {
-    return years !== null && years >= 5 && years <= 8;
-  }
-  if (selectedExp === "bracket:8+") {
-    return years !== null && years >= 8;
-  }
-  
-  if (job.experience && job.experience.toLowerCase().trim() === selectedExp.toLowerCase().trim()) return true;
-  const targetYears = parseExperienceYears(selectedExp);
-  if (targetYears !== null && years === targetYears) return true;
+  const experience = (job.experience || "").toLowerCase().trim();
+  const range = experience.match(/(\d+)\s*(?:-|–|to)\s*(\d+)/);
+  const minimum = range ? Number(range[1]) : parseExperienceYears(experience);
+  const maximum = range ? Number(range[2]) : /\d+\s*\+/.test(experience) ? null : minimum;
 
-  return false;
+  const matchesRange = (lower: number, upper: number | null) =>
+    minimum !== null &&
+    (upper === null || minimum <= upper) &&
+    (maximum === null || maximum >= lower);
+
+  if (selectedExp === "bracket:0-1") {
+    return isFresherJob(job) || matchesRange(0, 1);
+  }
+  if (selectedExp === "bracket:1-3") return matchesRange(1, 3);
+  if (selectedExp === "bracket:3-5") return matchesRange(3, 5);
+  if (selectedExp === "bracket:5-8") return matchesRange(5, 8);
+  if (selectedExp === "bracket:8+") return matchesRange(8, null);
+
+  const targetYears = parseExperienceYears(selectedExp);
+  if (targetYears === null || minimum === null) return false;
+  return minimum >= targetYears || (maximum !== null && maximum >= targetYears);
 }
 
 function matchesLevel(job: Job, selectedLevel: string): boolean {
   if (selectedLevel === "All levels") return true;
   const levelStr = (job.level || "").toLowerCase();
   const seniorityStr = (job.seniorityTag || "").toLowerCase();
+  const labels = `${levelStr} ${seniorityStr}`;
   
   if (selectedLevel === "Fresher / Entry") {
-    return isFresherJob(job) || seniorityStr.includes("intern") || seniorityStr.includes("junior");
+    return isFresherJob(job) || /intern|junior|entry|graduate|trainee/.test(labels);
   }
   if (selectedLevel === "Junior") {
-    return seniorityStr.includes("junior") || seniorityStr.includes("intern") || levelStr.includes("junior");
+    return /junior|intern/.test(labels);
   }
   if (selectedLevel === "Middle") {
-    return seniorityStr.includes("middle") || seniorityStr.includes("mid");
+    return /middle|mid/.test(labels);
   }
   if (selectedLevel === "Senior") {
-    return seniorityStr.includes("senior") || levelStr === "senior";
+    return /senior/.test(labels);
   }
   if (selectedLevel === "Lead / Principal") {
-    return /lead|staff|principal|chief|director|manager|c level/.test(`${seniorityStr} ${levelStr}`);
+    return /lead|staff|principal|chief|director|manager|c level/.test(labels);
   }
   if (selectedLevel === "Junior / Fresher") {
-    return job.level === "Junior / Fresher";
+    return matchesLevel(job, "Junior") || matchesLevel(job, "Fresher / Entry");
   }
   return job.level === selectedLevel || job.seniorityTag === selectedLevel;
 }
@@ -767,8 +767,81 @@ function getMotivationalGreeting(): { greeting: string; description: string } {
   };
 }
 
+type FollowUpReminder = {
+  application: Application;
+  job?: Job;
+  daysUntil: number;
+};
+
+function getFollowUpReminders(
+  applications: Application[],
+  jobs: Job[],
+): FollowUpReminder[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return applications
+    .filter((application) => application.followUpDate && application.status !== "rejected")
+    .map((application) => {
+      const date = new Date(`${application.followUpDate}T00:00:00`);
+      return {
+        application,
+        job: jobs.find((job) => job.id === application.jobId),
+        daysUntil: Math.round((date.getTime() - today.getTime()) / 86_400_000),
+      };
+    })
+    .filter(({ application, daysUntil }) =>
+      Number.isFinite(daysUntil) && Boolean(application.followUpDate) && daysUntil <= 7,
+    )
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+}
+
+function FollowUpReminders({
+  reminders,
+  onOpenJob,
+}: {
+  reminders: FollowUpReminder[];
+  onOpenJob: (job: Job) => void;
+}) {
+  return (
+    <section className="panel follow-up-panel">
+      <div className="panel-heading">
+        <div>
+          <h2><CalendarClock size={17}/> Follow-up reminders</h2>
+          <p>Overdue and upcoming follow-ups for the next 7 days</p>
+        </div>
+      </div>
+      {reminders.length === 0 ? (
+        <div className="follow-up-empty">No follow-ups due this week. Add a follow-up date in your application tracker.</div>
+      ) : (
+        <div className="follow-up-list">
+          {reminders.map(({ application, job, daysUntil }) => (
+            <button
+              type="button"
+              className="follow-up-row"
+              key={application.id}
+              disabled={!job}
+              onClick={() => job && onOpenJob(job)}
+            >
+              <span className={`follow-up-date ${daysUntil < 0 ? "overdue" : ""}`}>
+                {daysUntil < 0 ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? "Today" : `In ${daysUntil}d`}
+              </span>
+              <span className="follow-up-job">
+                <strong>{job?.title || "Archived opportunity"}</strong>
+                <small>{job?.company || "No longer in current dataset"} · {statusLabel[application.status]}</small>
+              </span>
+              <span className="follow-up-full-date">{prettyDate(application.followUpDate)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Dashboard({jobs,meta,applications,profile,goldCount,onOpen}:{jobs:Job[],meta:Metadata|null,applications:Application[],profile:UserProfile,goldCount:number,onOpen:(j:Job)=>void}) {
   const navigate = useNavigate();
+  const followUpReminders = getFollowUpReminders(applications, jobs);
   const fresh = [...jobs].sort((a,b)=>(b.postedOn||"").localeCompare(a.postedOn||"")).slice(0,6);
   const deptData = Object.entries(jobs.reduce((a,j)=>{const k=j.department||"Other";a[k]=(a[k]||0)+1;return a;},{} as Record<string,number>)).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([name,jobs])=>({name,jobs}));
   const modeData = Object.entries(jobs.reduce((a,j)=>{const k=j.workMode||"Not specified";a[k]=(a[k]||0)+1;return a;},{} as Record<string,number>)).map(([name,value])=>({name,value}));
@@ -812,6 +885,8 @@ function Dashboard({jobs,meta,applications,profile,goldCount,onOpen}:{jobs:Job[]
       <StatCard label="Junior / fresher" value={compactNumber(fresher)} change="Entry-level signals" icon={GraduationCap} tint="green"/>
       <StatCard label="Remote opportunities" value={compactNumber(jobs.filter(j=>(j.workMode||"").toLowerCase().includes("remote")).length)} change="Remote tagged" icon={Wifi} tint="violet"/>
     </div>
+
+    {followUpReminders.length > 0 && <FollowUpReminders reminders={followUpReminders} onOpenJob={onOpen}/>}
 
     <section className="panel chart-panel">
       <div className="panel-heading"><div><h2>Posted per day</h2><p>Click a day to see only that day's jobs</p></div></div>
@@ -1011,20 +1086,40 @@ function JobsPage({
   const skill = searchParams.get("skill");
   const urlDept = searchParams.get("department");
   const urlMatch = searchParams.get("match");
+  const initialMatchFilter = urlMatch === "gold" || urlMatch === "matches" ? urlMatch : "all";
 
   const [department,setDepartment]=useState(urlDept || "All departments");
   const [market,setMarket]=useState("All markets");
   const [mode,setMode]=useState("All work modes");
   const [level,setLevel]=useState(fresher ? "Fresher / Entry" : "All levels");
   const [experience,setExperience]=useState(fresher ? "bracket:0-1" : "All experience");
-  const [matchFilter,setMatchFilter]=useState<"all"|"gold"|"matches">((urlMatch as any) || "all");
+  const [matchFilter,setMatchFilter]=useState<"all"|"gold"|"matches">(initialMatchFilter);
   const [sort,setSort]=useState("recent");
+  const [comparisonIds,setComparisonIds]=useState<string[]>([]);
+  const [showComparison,setShowComparison]=useState(false);
+  const [appliedFilters,setAppliedFilters]=useState(() => ({
+    query: "",
+    department: urlDept || "All departments",
+    market: "All markets",
+    mode: "All work modes",
+    level: fresher ? "Fresher / Entry" : "All levels",
+    experience: fresher ? "bracket:0-1" : "All experience",
+    matchFilter: initialMatchFilter,
+    sort: "recent",
+  }));
   const [page,setPage]=useState(1);
   const pageSize=12;
 
   useEffect(() => {
-    if (urlDept) setDepartment(urlDept);
-    if (urlMatch === "gold" || urlMatch === "matches") setMatchFilter(urlMatch);
+    const nextDepartment = urlDept || "All departments";
+    const nextMatchFilter = urlMatch === "gold" || urlMatch === "matches" ? urlMatch : "all";
+    setDepartment(nextDepartment);
+    setMatchFilter(nextMatchFilter);
+    setAppliedFilters(current => ({
+      ...current,
+      department: nextDepartment,
+      matchFilter: nextMatchFilter,
+    }));
   }, [urlDept, urlMatch]);
 
   // Press "/" to focus search input
@@ -1039,38 +1134,41 @@ function JobsPage({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const dq = useDeferredValue(query);
   const departments = useMemo(()=>["All departments",...Array.from(new Set(allJobs.map(j=>j.department).filter(Boolean) as string[])).sort()], [allJobs]);
 
   const filtered = useMemo(()=>{
     let list = jobs;
-    if (dq) {
-      const f = new Fuse(list, { keys: ["title", "company", "department", "skills", "location", "experience", "seniorityTag", "level"], threshold: 0.35 });
-      list = f.search(dq).map(x => x.item);
+    if (appliedFilters.query) {
+      const f = new Fuse(list, {
+        keys: ["title", "company", "department", "skills", "location", "experience", "seniorityTag", "level", "workMode", "market", "salary", "employmentType", "companyType", "sourceFiles", "sourceSheets", "searchText"],
+        threshold: 0.35,
+        ignoreLocation: true,
+      });
+      list = f.search(appliedFilters.query).map(x => x.item);
     }
     if (posted) list = list.filter(j => j.postedOn === posted);
     if (skill) {
       const sNorm = skill.toLowerCase().trim();
       list = list.filter(j => j.skills.some(sk => sk.toLowerCase().trim() === sNorm || sk.toLowerCase().includes(sNorm)));
     }
-    if (market !== "All markets") list = list.filter(j => j.market === market);
-    if (department !== "All departments") list = list.filter(j => j.department === department);
-    if (mode !== "All work modes") list = list.filter(j => j.workMode === mode);
+    if (appliedFilters.market !== "All markets") list = list.filter(j => j.market === appliedFilters.market);
+    if (appliedFilters.department !== "All departments") list = list.filter(j => j.department === appliedFilters.department);
+    if (appliedFilters.mode !== "All work modes") list = list.filter(j => j.workMode === appliedFilters.mode);
     
     // Apply Experience (Years) filter
-    if (experience !== "All experience") {
-      list = list.filter(j => matchesExperience(j, experience));
+    if (appliedFilters.experience !== "All experience") {
+      list = list.filter(j => matchesExperience(j, appliedFilters.experience));
     }
 
     // Apply Level / Seniority filter
-    if (level !== "All levels") {
-      list = list.filter(j => matchesLevel(j, level));
+    if (appliedFilters.level !== "All levels") {
+      list = list.filter(j => matchesLevel(j, appliedFilters.level));
     }
 
     // Apply Resume Match Filter
-    if (matchFilter === "gold") {
+    if (appliedFilters.matchFilter === "gold") {
       list = list.filter(j => jobMatches.get(j.id)?.tier === "gold");
-    } else if (matchFilter === "matches") {
+    } else if (appliedFilters.matchFilter === "matches") {
       list = list.filter(j => {
         const m = jobMatches.get(j.id);
         return m?.tier === "gold" || m?.tier === "green";
@@ -1079,23 +1177,38 @@ function JobsPage({
 
     return [...list].sort((a,b)=>{
       // When match filter is active, sort by highest match score
-      if (matchFilter !== "all" && sort === "recent") {
+      if (appliedFilters.matchFilter !== "all" && appliedFilters.sort === "recent") {
         const scoreA = jobMatches.get(a.id)?.score ?? 0;
         const scoreB = jobMatches.get(b.id)?.score ?? 0;
         if (scoreB !== scoreA) return scoreB - scoreA;
       }
-      if (sort === "recent") return (b.postedOn||"").localeCompare(a.postedOn||"");
-      if (sort === "company") return a.company.localeCompare(b.company);
-      if (sort === "exp-low") return (parseExperienceYears(a.experience) ?? 99) - (parseExperienceYears(b.experience) ?? 99);
-      if (sort === "exp-high") return (parseExperienceYears(b.experience) ?? -1) - (parseExperienceYears(a.experience) ?? -1);
+      if (appliedFilters.sort === "recent") return (b.postedOn||"").localeCompare(a.postedOn||"");
+      if (appliedFilters.sort === "company") return a.company.localeCompare(b.company);
+      if (appliedFilters.sort === "exp-low") return (parseExperienceYears(a.experience) ?? 99) - (parseExperienceYears(b.experience) ?? 99);
+      if (appliedFilters.sort === "exp-high") return (parseExperienceYears(b.experience) ?? -1) - (parseExperienceYears(a.experience) ?? -1);
       return a.title.localeCompare(b.title);
     });
-  },[jobs, dq, department, mode, level, experience, matchFilter, sort, posted, skill, market, jobMatches]);
+  },[jobs, appliedFilters, posted, skill, jobMatches]);
 
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const shown = filtered.slice((page-1)*pageSize, page*pageSize);
 
-  useEffect(()=>setPage(1),[query,department,mode,level,experience,matchFilter,sort,posted,skill,market]);
+  useEffect(()=>setPage(1),[appliedFilters,posted,skill]);
+
+  const applyFilters = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setAppliedFilters({
+      query: query.trim(),
+      department,
+      market,
+      mode,
+      level,
+      experience,
+      matchFilter,
+      sort,
+    });
+    setPage(1);
+  };
 
   const clearAllFilters = () => {
     setQuery("");
@@ -1105,8 +1218,31 @@ function JobsPage({
     setExperience("All experience");
     setMatchFilter("all");
     setMarket("All markets");
+    setSort("recent");
+    setAppliedFilters({
+      query: "",
+      department: "All departments",
+      market: "All markets",
+      mode: "All work modes",
+      level: "All levels",
+      experience: "All experience",
+      matchFilter: "all",
+      sort: "recent",
+    });
+    setPage(1);
     navigate(location.pathname);
   };
+
+  const toggleComparison = (jobId: string) => {
+    setComparisonIds((current) => {
+      if (current.includes(jobId)) return current.filter((id) => id !== jobId);
+      if (current.length >= 3) return current;
+      return [...current, jobId];
+    });
+  };
+  const comparisonJobs = comparisonIds
+    .map((id) => allJobs.find((job) => job.id === id))
+    .filter((job): job is Job => Boolean(job));
 
   return <div className="page-stack">
     <SectionHeading
@@ -1116,14 +1252,16 @@ function JobsPage({
       action={<button className="button button-secondary" onClick={()=>downloadCsv(filtered)}><Download size={16}/> Export CSV</button>}
     />
 
-    <div className="filter-panel">
+    <form className="filter-panel" onSubmit={applyFilters}>
       <div className="filter-search">
         <Search size={17}/>
         <input
           ref={filterInputRef}
+          type="search"
           placeholder="Search job title, company, skill..."
           value={query}
           onChange={e=>setQuery(e.target.value)}
+          aria-label="Search jobs"
         />
         <kbd>/</kbd>
       </div>
@@ -1136,18 +1274,21 @@ function JobsPage({
         </div>
         <div className="match-tabs">
           <button
+            type="button"
             className={`match-tab ${matchFilter==="all"?"active":""}`}
             onClick={()=>setMatchFilter("all")}
           >
             All Jobs
           </button>
           <button
+            type="button"
             className={`match-tab gold-tab ${matchFilter==="gold"?"active":""}`}
             onClick={()=>setMatchFilter("gold")}
           >
             <Sparkles size={13} color="#F5B700"/> Golden (≥ 80%)
           </button>
           <button
+            type="button"
             className={`match-tab green-tab ${matchFilter==="matches"?"active":""}`}
             onClick={()=>setMatchFilter("matches")}
           >
@@ -1246,7 +1387,7 @@ function JobsPage({
         />
 
         {/* Active chips from URL */}
-        {(posted||skill)&&<button className="active-chip" title="Clear filter" onClick={()=>navigate(location.pathname)}>{posted?"Posted "+prettyDate(posted):"Skill: "+skill} <X size={13}/></button>}
+        {(posted||skill)&&<button type="button" className="active-chip" title="Clear filter" onClick={()=>navigate(location.pathname)}>{posted?"Posted "+prettyDate(posted):"Skill: "+skill} <X size={13}/></button>}
 
         {/* Sort Options */}
         <FilterDropdown
@@ -1266,9 +1407,12 @@ function JobsPage({
 
       <div className="filter-summary">
         <span><strong>{compactNumber(filtered.length)}</strong> opportunities found</span>
-        <button onClick={clearAllFilters}>Clear filters</button>
+        <div className="filter-summary-actions">
+          <button type="submit" className="button button-primary"><Search size={14}/> Apply filters</button>
+          <button type="button" className="clear-filters-button" onClick={clearAllFilters}>Clear filters</button>
+        </div>
       </div>
-    </div>
+    </form>
 
     <div className="panel jobs-table-panel">
       <div className="table-heading">
@@ -1278,6 +1422,17 @@ function JobsPage({
         </div>
         <span className="table-source"><span className="status-dot"/> Combined dataset</span>
       </div>
+      {comparisonIds.length > 0 && (
+        <div className="comparison-toolbar">
+          <span>{comparisonIds.length} of 3 jobs selected</span>
+          <div>
+            <button type="button" className="button button-primary" disabled={comparisonIds.length < 2} onClick={() => setShowComparison(true)}>
+              <GitCompareArrows size={15}/> Compare jobs
+            </button>
+            <button type="button" className="button button-quiet" onClick={() => setComparisonIds([])}>Clear selection</button>
+          </div>
+        </div>
+      )}
       {shown.length===0?<div className="empty-state"><Search size={28}/><strong>No matching jobs found</strong><span>Try a different search or clear some filters.</span></div>:
       <div className="jobs-table-wrap">
         <table className="jobs-table">
@@ -1329,6 +1484,16 @@ function JobsPage({
                       <button className={`icon-button small ${bookmarks.includes(j.id)?"is-bookmarked":""}`} title="Bookmark" onClick={()=>onBookmark(j.id)}>
                         {bookmarks.includes(j.id)?<BookmarkCheck size={16}/>:<Bookmark size={16}/>}
                       </button>
+                      <button
+                        type="button"
+                        className={`icon-button small ${comparisonIds.includes(j.id) ? "is-bookmarked" : ""}`}
+                        title={comparisonIds.includes(j.id) ? "Remove from comparison" : comparisonIds.length >= 3 ? "Select up to 3 jobs" : "Add to comparison"}
+                        aria-label={comparisonIds.includes(j.id) ? `Remove ${j.title} from comparison` : `Add ${j.title} to comparison`}
+                        disabled={!comparisonIds.includes(j.id) && comparisonIds.length >= 3}
+                        onClick={() => toggleComparison(j.id)}
+                      >
+                        <GitCompareArrows size={16}/>
+                      </button>
                       <button className="icon-button small" onClick={()=>onOpen(j)} title="View details">
                         <ArrowUpRight size={16}/>
                       </button>
@@ -1348,7 +1513,113 @@ function JobsPage({
         </div>
       </div>
     </div>
+    {showComparison && comparisonJobs.length >= 2 && (
+      <JobComparisonModal
+        jobs={comparisonJobs}
+        jobMatches={jobMatches}
+        profile={profile}
+        onClose={() => setShowComparison(false)}
+      />
+    )}
   </div>;
+}
+
+function JobComparisonModal({
+  jobs,
+  jobMatches,
+  profile,
+  onClose,
+}: {
+  jobs: Job[];
+  jobMatches: Map<string, JobMatchResult>;
+  profile: UserProfile;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  const rows: { label: string; value: (job: Job) => string }[] = [
+    { label: "Resume match", value: (job) => `${jobMatches.get(job.id)?.score ?? 0}%` },
+    { label: "Department", value: (job) => job.department || "Not specified" },
+    { label: "Experience", value: (job) => job.experience || "Not specified" },
+    { label: "Seniority", value: (job) => job.seniorityTag || job.level || "Not specified" },
+    { label: "Location", value: (job) => job.location || "Not specified" },
+    { label: "Work mode", value: (job) => job.workMode || "Not specified" },
+    { label: "Employment", value: (job) => job.employmentType || "Not specified" },
+    { label: "Salary", value: (job) => job.salary || "Not specified" },
+    { label: "Posted", value: (job) => prettyDate(job.postedOn) },
+  ];
+
+  return (
+    <div className="comparison-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="comparison-modal" role="dialog" aria-modal="true" aria-labelledby="comparison-title">
+        <div className="comparison-heading">
+          <div>
+            <h2 id="comparison-title">Compare opportunities</h2>
+            <p>Review role details and how each listing aligns with your profile.</p>
+          </div>
+          <button type="button" className="icon-button" aria-label="Close comparison" onClick={onClose}><X size={18}/></button>
+        </div>
+        <div className="comparison-table-wrap">
+          <table className="comparison-table">
+            <thead>
+              <tr>
+                <th scope="col">Details</th>
+                {jobs.map((job) => (
+                  <th scope="col" key={job.id}>
+                    <strong>{job.title}</strong>
+                    <span>{job.company}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ label, value }) => (
+                <tr key={label}>
+                  <th scope="row">{label}</th>
+                  {jobs.map((job) => (
+                    <td key={job.id}>{value(job)}</td>
+                  ))}
+                </tr>
+              ))}
+              <tr>
+                <th scope="row">Skills & fit</th>
+                {jobs.map((job) => {
+                  const match = jobMatches.get(job.id);
+                  return (
+                    <td key={job.id}>
+                      {job.skills.length > 0 ? (
+                        <div className="comparison-skills">
+                          {job.skills.map((skill) => {
+                            const matched = match?.matchedSkills.some((item) => item.toLowerCase() === skill.toLowerCase()) ?? false;
+                            return (
+                              <span className={matched ? "skill-match" : "skill-gap"} key={skill}>
+                                {matched ? "✓ " : profile.skills.length > 0 ? "Gap · " : ""}
+                                {skill}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : "No structured skills listed"}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="comparison-legend">
+          <span className="skill-match">✓ Matches your profile</span>
+          {profile.skills.length > 0 && <span className="skill-gap">Gap · Not found in your profile</span>}
+        </p>
+      </section>
+    </div>
+  );
 }
 
 function ProfilePage({
@@ -1406,17 +1677,17 @@ function ProfilePage({
       if (detectedExp !== null) {
         setExp(String(detectedExp));
       }
-      if (detectedName && (!name.trim() || name === "Candidate")) {
+      if (detectedName && (!name.trim() || name.trim().toLowerCase() === "candidate")) {
         setName(detectedName);
       }
-      if (detectedTitle && !title.trim()) {
+      if (detectedTitle && (!title.trim() || title.trim().toLowerCase() === "software engineer")) {
         setTitle(detectedTitle);
       }
       
-      alert(`Resume processed successfully! Detected ${detectedSkills.length} skills${detectedName ? ` for ${detectedName}` : ""} from your resume.`);
+      alert(`Resume processed successfully! Detected ${detectedSkills.length} skills${detectedName ? ` for ${detectedName}` : "; name not detected, please check it"} from your resume.`);
     } catch (e) {
       console.error(e);
-      alert("Could not extract text from file. You can paste your resume text directly into the box below.");
+      alert(e instanceof Error ? e.message : "Could not extract text from file. You can paste your resume text directly into the box below.");
     } finally {
       setAnalyzing(false);
     }
@@ -1472,7 +1743,7 @@ function ProfilePage({
       <div className="panel profile-card">
         <h2 style={{font:"700 16px 'Bricolage Grotesque Variable'",marginBottom:"18px"}}>Career & Background</h2>
         
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
+        <div className="profile-fields-grid">
           <div className="form-field">
             <label>Your Name</label>
             <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Alex Sharma"/>
@@ -1483,7 +1754,7 @@ function ProfilePage({
           </div>
         </div>
 
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px"}}>
+        <div className="profile-fields-grid">
           <div className="form-field">
             <label>Years of Experience</label>
             <input type="number" min="0" max="30" value={exp} onChange={e=>setExp(e.target.value)}/>
@@ -1545,7 +1816,7 @@ function ProfilePage({
             <Sparkles size={18} color="#F5B700"/>
             <strong style={{fontSize:"15px",color:"var(--text)"}}>Live Opportunity Radar</strong>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"10px"}}>
+          <div className="match-overview-stats">
             <div style={{background:"var(--panel)",borderRadius:"8px",padding:"12px",border:"1px solid rgba(245,183,0,0.3)"}}>
               <span className="badge-gold-glow" style={{marginBottom:"4px"}}>
                 <Sparkles size={11}/> Golden (≥ 80%)
@@ -1578,13 +1849,13 @@ function ProfilePage({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.txt,.docx,.md"
+              accept=".pdf,.txt,.docx,.md,.tex"
               style={{display:"none"}}
               onChange={e=>{if(e.target.files?.[0])handleFileUpload(e.target.files[0]);}}
             />
             <Upload size={28} color="var(--blue)" style={{margin:"0 auto 8px"}}/>
             <strong style={{display:"block",fontSize:"13.5px",color:"var(--text)"}}>
-              {analyzing ? "Analyzing resume text..." : resumeFileName ? `Uploaded: ${resumeFileName}` : "Click or drag your resume (.pdf, .txt, .docx)"}
+              {analyzing ? "Analyzing resume text..." : resumeFileName ? `Uploaded: ${resumeFileName}` : "Click or drag your resume (.pdf, .docx, .tex, .txt)"}
             </strong>
             <small style={{color:"var(--muted)",fontSize:"12px"}}>
               100% private to your browser · No files uploaded to any server
@@ -1635,14 +1906,16 @@ function Departments({jobs}:{jobs:Job[]}) {
   </div>;
 }
 
-function ApplicationsPage({jobs,applications,onStatus,onRemove,onPatch}:{onPatch:(a:Application)=>void,jobs:Job[],applications:Application[],onStatus:(id:string,s:ApplicationStatus)=>void,onRemove:(id:string)=>void}) {
+function ApplicationsPage({jobs,applications,onStatus,onRemove,onPatch,onOpenJob}:{onPatch:(a:Application)=>void,jobs:Job[],applications:Application[],onStatus:(id:string,s:ApplicationStatus)=>void,onRemove:(id:string)=>void,onOpenJob:(job:Job)=>void}) {
   const [filter,setFilter]=useState("all");
   const rows=applications.filter(a=>filter==="all"||a.status===filter).map(a=>({app:a,job:jobs.find(j=>j.id===a.jobId)}));
+  const followUpReminders = getFollowUpReminders(applications, jobs);
   return <div className="page-stack">
     <SectionHeading eyebrow="YOUR CAREER PIPELINE" title="Application tracker" description="Keep your applications, follow-ups and interview progress organized."/>
     <div className="tracker-stats">
       {statuses.slice(0,6).map(s=><button className={`tracker-stat ${filter===s?"selected":""}`} key={s} onClick={()=>setFilter(filter===s?"all":s)}><span>{statusLabel[s]}</span><strong>{applications.filter(a=>a.status===s).length}</strong></button>)}
     </div>
+    <FollowUpReminders reminders={followUpReminders} onOpenJob={onOpenJob}/>
     <div className="panel">
       <div className="panel-heading"><div><h2>Tracked opportunities</h2><p>{rows.length} applications in this view · stored on this device</p></div><button className="button button-quiet" onClick={()=>setFilter("all")}>All statuses</button></div>
       {rows.length===0?<div className="empty-state"><ClipboardList size={28}/><strong>Your tracker is ready</strong><span>Open a job and choose a status to start tracking it.</span></div>:
@@ -1819,39 +2092,48 @@ function JobModal({
         {job.seniorityTag && <span><GraduationCap size={13}/>{job.seniorityTag}</span>}
       </div>
 
-      {/* Resume Match Breakdown */}
-      {match && match.tier !== "none" && (
-        <div style={{
-          marginTop:"18px",padding:"14px",borderRadius:"10px",
-          background: match.tier === "gold" ? "linear-gradient(135deg,rgba(245,183,0,0.12),rgba(245,183,0,0.04))" : "linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.02))",
-          border: match.tier === "gold" ? "1px solid rgba(245,183,0,0.35)" : "1px solid rgba(16,185,129,0.3)"
-        }}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"6px"}}>
-            <strong style={{fontSize:"13px",color:"var(--text)"}}>Resume Fit Analysis</strong>
-            <span style={{fontSize:"12px",fontWeight:700,color:match.tier==="gold"?"#B28000":"#10B981"}}>{match.score}% Score</span>
+      {match && (
+        <section className={`resume-fit-panel ${match.tier}`}>
+          <div className="resume-fit-heading">
+            <strong>Resume match & skill gaps</strong>
+            <span>{match.score}% match</span>
           </div>
-          <p style={{fontSize:"12.5px",margin:"0 0 10px",color:"var(--muted)",lineHeight:1.5}}>{match.matchReason}</p>
-          {match.matchedSkills.length > 0 && (
-            <div style={{display:"flex",alignItems:"center",gap:"5px",flexWrap:"wrap",marginBottom:"8px"}}>
-              <small style={{fontSize:"11.5px",color:"var(--text)",fontWeight:600}}>Matching skills:</small>
-              {match.matchedSkills.map(s => (
-                <span key={s} style={{background:match.tier==="gold"?"#FFE082":"#A7F3D0",color:match.tier==="gold"?"#7A5300":"#065F46",padding:"2px 6px",borderRadius:"4px",fontSize:"11px",fontWeight:700}}>
-                  ✓ {s}
-                </span>
-              ))}
+          <p>{match.matchReason}</p>
+          {job.skills.length === 0 ? (
+            <div className="skill-gap-note">This listing does not include structured skills to compare.</div>
+          ) : !profile?.skills.length ? (
+            <div className="skill-gap-note">Add skills to your profile to see which job requirements match and which are gaps.</div>
+          ) : (
+            <div className="skill-gap-columns">
+              <div>
+                <strong>Skills you match ({match.matchedSkills.length})</strong>
+                <div className="comparison-skills">
+                  {match.matchedSkills.length > 0
+                    ? match.matchedSkills.map((skill) => <span className="skill-match" key={skill}>✓ {skill}</span>)
+                    : <small>No direct skill matches found.</small>}
+                </div>
+              </div>
+              <div>
+                <strong>Skills to develop ({match.missingSkills.length})</strong>
+                <div className="comparison-skills">
+                  {match.missingSkills.length > 0
+                    ? match.missingSkills.map((skill) => <span className="skill-gap" key={skill}>{skill}</span>)
+                    : <small>No listed skill gaps found.</small>}
+                </div>
+              </div>
             </div>
           )}
           {profile && (
             <button
               type="button"
               className="button button-secondary"
-              style={{marginTop:"4px",fontSize:"12px",padding:"6px 10px"}}
+              style={{marginTop:"12px",fontSize:"12px",padding:"6px 10px"}}
               onClick={handleCopyPitch}
             >
               {copiedPitch ? <><CheckCheck size={14} color="#10B981"/> Copied pitch to clipboard!</> : <><Copy size={14}/> Copy application pitch note</>}
             </button>
           )}
-        </div>
+        </section>
       )}
 
       <div className="detail-grid">

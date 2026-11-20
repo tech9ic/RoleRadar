@@ -1,6 +1,9 @@
 import type { Job, JobMatchResult, UserProfile } from "../types/job";
 import { inflateRaw } from "./inflate";
 
+const NO_SELECTABLE_PDF_TEXT =
+  "No selectable text was found in this PDF. If it is a scanned image, paste the resume text instead.";
+
 // Comprehensive canonical skill mappings and synonyms
 export const SKILL_ALIASES: Record<string, string[]> = {
   // Cybersecurity & InfoSec
@@ -241,19 +244,24 @@ export function detectExperienceFromText(text: string): number | null {
 
 export function detectNameFromText(text: string): string | null {
   if (!text) return null;
+  const ignoredNameWords =
+    /^(resume|curriculum|vitae|cv|profile|summary|contact|experience|education|skills|engineer|developer|analyst|designer|manager|objective|linkedin|github)$/i;
   const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 2 && l.length < 45);
-  for (const line of lines.slice(0, 5)) {
+    .slice(0, 1200)
+    .split(/[\r\n|•]+/)
+    .map((line) => line.replace(/^(?:name|candidate)\s*:\s*/i, "").trim())
+    .filter((line) => line.length > 2 && line.length < 60);
+
+  for (const line of lines) {
+    const words = line.match(/[\p{L}][\p{L}'’.-]*/gu) || [];
+    if (words.length < 2 || words.length > 4) continue;
+    if (words.some((word) => ignoredNameWords.test(word))) continue;
     if (
-      /^(resume|curriculum|cv|profile|summary|contact|experience|education|skills)/i.test(
-        line,
-      )
-    )
-      continue;
-    if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]*)*\s+[A-Z][a-z]+$/.test(line)) {
-      return line;
+      words.every((word) => /^\p{Lu}[\p{L}'’.-]*$/u.test(word) || word === word.toUpperCase())
+    ) {
+      return words
+        .map((word) => word[0].toLocaleUpperCase() + word.slice(1).toLocaleLowerCase())
+        .join(" ");
     }
   }
   return null;
@@ -272,6 +280,61 @@ export function detectTitleFromText(text: string): string | null {
   if (/backend|node|python|java/i.test(text)) return "Backend Engineer";
   if (/data analyst|analytics/i.test(text)) return "Data Analyst";
   return null;
+}
+
+function extractLatexSourceText(source: string): string {
+  return source
+    .replace(/(?<!\\)%.*$/gm, "")
+    .replace(/\\href\{[^{}]*\}\{([^{}]*)\}/g, "$1")
+    .replace(/\\url\{([^{}]*)\}/g, "$1")
+    .replace(/\\(?:begin|end)\{[^{}]*\}/g, " ")
+    .replace(/\\item\b/g, "\n")
+    .replace(/\\\\(?:\[[^\]]*\])?/g, "\n")
+    .replace(/\\[a-zA-Z]+\*?/g, " ")
+    .replace(/\\([%&#_$])/g, "$1")
+    .replace(/[{}]/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function extractPdfText(file: File): Promise<string> {
+  const [pdfjsLib, pdfWorker] = await Promise.all([
+    import("pdfjs-dist"),
+    import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
+  ]);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker.default;
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+  });
+  const document = await loadingTask.promise;
+
+  try {
+    const pages: string[] = [];
+    for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber++) {
+      const page = await document.getPage(pageNumber);
+      const content = await page.getTextContent();
+      let previousY: number | null = null;
+      const text = content.items
+        .map((item) => {
+          if (!("str" in item)) return "";
+          const y = item.transform[5];
+          const startsNewLine = previousY !== null && Math.abs(y - previousY) > 2;
+          previousY = y;
+          return `${startsNewLine ? "\n" : ""}${item.str}${item.hasEOL ? "\n" : " "}`;
+        })
+        .join("")
+        .replace(/[ \t]+\n/g, "\n")
+        .trim();
+      if (text) pages.push(text);
+      page.cleanup();
+    }
+    return pages.join("\n");
+  } finally {
+    await loadingTask.destroy();
+  }
 }
 
 // Client-side PDF stream decompressor with pure JS fallback
@@ -328,13 +391,24 @@ export async function extractTextFromFile(file: File): Promise<string> {
     extension === "txt" ||
     extension === "md" ||
     extension === "json" ||
-    extension === "csv"
+    extension === "csv" ||
+    extension === "tex"
   ) {
-    return await file.text();
+    const text = await file.text();
+    return extension === "tex" ? extractLatexSourceText(text) : text;
   }
 
-  // Client-side PDF parser with ToUnicode CMap & CID font support
+  // PDF.js handles standard PDF text encodings; retain the local parser as fallback.
   if (extension === "pdf") {
+    try {
+      const extractedText = await extractPdfText(file);
+      if (extractedText) return extractedText;
+      throw new Error(NO_SELECTABLE_PDF_TEXT);
+    } catch (e) {
+      if (e instanceof Error && e.message === NO_SELECTABLE_PDF_TEXT) throw e;
+      console.warn("PDF.js extraction fallback", e);
+    }
+
     try {
       const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
@@ -547,8 +621,11 @@ export async function extractTextFromFile(file: File): Promise<string> {
       const tokens = latinText.match(/[A-Za-z0-9+#.-]{3,35}/g) || [];
       return tokens.slice(0, 3000).join(" ");
     } catch (e) {
-      console.warn("PDF extraction fallback", e);
-      return await file.text().catch(() => "");
+      console.error("Could not extract text from PDF", e);
+      throw new Error(
+        "Could not extract text from this PDF. Try exporting a text-searchable PDF or paste the resume text.",
+        { cause: e },
+      );
     }
   }
 
