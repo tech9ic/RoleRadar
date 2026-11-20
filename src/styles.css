@@ -25,6 +25,11 @@ body {
   background: var(--bg);
   color: var(--text);
 }
+@media (max-width: 320px) {
+  body {
+    min-width: 0;
+  }
+}
 :root {
   --bg: #f6f7f9;
   --panel: #fff;
@@ -463,6 +468,24 @@ select optgroup {
 .button-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+.profile-save-button {
+  min-width: 126px;
+  background: #425fdf;
+}
+.profile-save-button:hover {
+  background: #354fc5;
+}
+.profile-save-button.has-unsaved-changes {
+  background: #344fc4;
+  box-shadow: 0 2px 8px rgba(52, 79, 196, 0.24);
+}
+.profile-save-button.has-unsaved-changes:hover {
+  background: #293fa8;
+}
+.profile-save-button:focus-visible {
+  outline: 3px solid rgba(83, 111, 242, 0.35);
+  outline-offset: 2px;
 }
 .button-quiet {
   background: transparent;
@@ -1606,6 +1629,15 @@ select optgroup {
   }
   .welcome-right {
     display: none;
+  }
+}
+@media (max-height: 600px) {
+  .sidebar {
+    overflow-y: auto;
+  }
+  .side-nav {
+    flex: 0 0 auto;
+    overflow: visible;
   }
 }
 @media (max-width: 520px) {

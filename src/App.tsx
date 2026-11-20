@@ -1642,6 +1642,21 @@ function ProfilePage({
   const [saveSuccess,setSaveSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const hasUnsavedChanges = useMemo(() => {
+    const savedSkills = profile.skills || [];
+    return (
+      (name.trim() || "Candidate") !== (profile.name || "Candidate") ||
+      title.trim() !== (profile.title || "") ||
+      (Math.max(0, parseInt(exp, 10) || 0)) !== (profile.experienceYears || 0) ||
+      skills.length !== savedSkills.length ||
+      skills.some((skill, index) => skill !== savedSkills[index]) ||
+      dept !== (profile.targetDepartment || "All departments") ||
+      workMode !== (profile.preferredWorkMode || "Any") ||
+      resumeFileName !== (profile.resumeFileName || "") ||
+      resumeText !== (profile.resumeText || "")
+    );
+  }, [name, title, exp, skills, dept, workMode, resumeFileName, resumeText, profile]);
+
   const allKnownSkills = useMemo(() => {
     return Array.from(new Set(jobs.flatMap(j => j.skills))).filter(Boolean);
   }, [jobs]);
@@ -1732,8 +1747,14 @@ function ProfilePage({
       title="My Profile & Resume"
       description="Personalize your skills and upload your resume. RoleRadar matches jobs in real-time and highlights Golden Opportunities (≥ 80% fit) with glowing gold & green outlines."
       action={
-        <button className="button button-primary" onClick={()=>handleSubmit()}>
-          {saveSuccess ? <><Check size={16}/> Saved to device!</> : "Save Profile"}
+        <button
+          type="button"
+          className={`button button-primary profile-save-button ${hasUnsavedChanges ? "has-unsaved-changes" : ""}`}
+          onClick={()=>handleSubmit()}
+          aria-label={hasUnsavedChanges ? "Save profile changes" : "Save profile"}
+          title={hasUnsavedChanges ? "You have unsaved profile changes" : "Save your profile"}
+        >
+          {hasUnsavedChanges ? "Save changes" : saveSuccess ? <><Check size={16}/> Saved to device!</> : "Save Profile"}
         </button>
       }
     />
